@@ -193,18 +193,6 @@ def summaryStudentReport(theList, studentID):
     print('page-break')
     return
 
-def menu():
-    choice = ''
-    while choice != ('e' or 'E'):
-        print('\n ___________ _____   _____               _      _                 _    \n/  ___| ___ \  __ \ |  __ \             | |    | |               | |   \n\ `--.| |_/ / |  \/ | |  \/_ __ __ _  __| | ___| |__   ___   ___ | | __\n `--. \ ___ \ | __  | | __| \'__/ _` |/ _` |/ _ \ \'_ \ / _ \ / _ \| |/ /\n/\__/ / |_/ / |_\ \ | |_\ \ | | (_| | (_| |  __/ |_) | (_) | (_) |   < \n\____/\____/ \____/  \____/_|  \__,_|\__,_|\___|_.__/ \___/ \___/|_|\_\\')
-        print('v 1.0.0\n\n')
-        print('Course #: ', myCourse)
-        print('[P]rint Progress Reports\n[E]xit')
-        choice = input('What would you like to do? ')
-        if choice == ('p' or 'P'):
-            print('print')
-    return
-
 def main():
     myStudents = getStudentDictionary(myCourse) #creates students JSON
     myAssignments = getAssignments(myCourse)    #create assignment JSON (big!)
