@@ -111,10 +111,29 @@ def summaryStudentReport(theList, studentID, reportType):
     student['scores'] = sorted(student['scores'], key=lambda k: k['due_date'])
     print(student['name'])
     print('----------------')
+
     ######################################
+    mpLevels = {}
+    for i in student['scores']:
+        if standardType1 in i['standard_name']:
+            mpLevels[i['standard_name']] = i['score']
+
+    count = 0
+    blanks = 0
+    for k in mpLevels.keys():
+        if isinstance(mpLevels[k], int) or isinstance(mpLevels[k], float):
+            count += mpLevels[k]
+        else:
+            blanks += 1
+    if len(mpLevels)-blanks != 0:
+        mpLvlAvg = float(count/(len(mpLevels)-blanks))
+    else:
+        mpLvlAvg = 0
+
+    ####################################### 
     aLevels = {}
     for i in student['scores']:
-        if '.A.' in i['standard_name']:
+        if standardType2 in i['standard_name']:
             aLevels[i['standard_name']] = i['score']
 
     count = 0
@@ -131,7 +150,7 @@ def summaryStudentReport(theList, studentID, reportType):
     #######################################    
     cLevels = {}
     for i in student['scores']:
-        if '.C.' in i['standard_name']:
+        if standardType3 in i['standard_name']:
             cLevels[i['standard_name']] = i['score']
     
     count = 0
@@ -146,24 +165,6 @@ def summaryStudentReport(theList, studentID, reportType):
     else:
         cLvlAvg = 0
     #######################################
-    
-    mpLevels = {}
-    for i in student['scores']:
-        if 'MP.' in i['standard_name']:
-            mpLevels[i['standard_name']] = i['score']
-
-    count = 0
-    blanks = 0
-    for k in mpLevels.keys():
-        if isinstance(mpLevels[k], int) or isinstance(mpLevels[k], float):
-            count += mpLevels[k]
-        else:
-            blanks += 1
-    if len(mpLevels)-blanks != 0:
-        mpLvlAvg = float(count/(len(mpLevels)-blanks))
-    else:
-        mpLvlAvg = 0
-    ######################################
 
     print('MP Average: {0:.4f} A Average: {1:.4f} C Average: {2:.4f}'.format(mpLvlAvg, aLvlAvg, cLvlAvg))
     print('Course Grade: ', gradeLookup(mpLvlAvg, aLvlAvg, cLvlAvg))
@@ -201,7 +202,7 @@ def summaryStudentReport(theList, studentID, reportType):
 def menu(myStudents, myInformation):
     choice = ''
     print('\n ___________ _____   _____               _      _                 _    \n/  ___| ___ \  __ \ |  __ \             | |    | |               | |   \n\ `--.| |_/ / |  \/ | |  \/_ __ __ _  __| | ___| |__   ___   ___ | | __\n `--. \ ___ \ | __  | | __| \'__/ _` |/ _` |/ _ \ \'_ \ / _ \ / _ \| |/ /\n/\__/ / |_/ / |_\ \ | |_\ \ | | (_| | (_| |  __/ |_) | (_) | (_) |   < \n\____/\____/ \____/  \____/_|  \__,_|\__,_|\___|_.__/ \___/ \___/|_|\_\\')
-    print('v 1.0.1\n\n')
+    print('v 1.1.0 - January 19, 2017\n\n')
     print('Course #: ', myCourse)
     print('[S] Save Progress Reports (gradeReport-YYYY-MM-DD-hh-mm-ss.txt)\n[E] E-mail Progress Reports\n[X] Exit')
     choice = input('What would you like to do? ')
@@ -260,9 +261,7 @@ def generateEmailReport(myStudents, myInformation, choice):
         with open('emailReport.txt', 'r') as report:
             grades = report.read()
 
-        #print(str(i['login_id']))   #for testing
-        #print(grades)
-        sendEmailReport(str(i['login_id']), grades)     #for actually e-mailing reports              
+        sendEmailReport(str(i['login_id']), grades) 
 
     return
 
