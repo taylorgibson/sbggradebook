@@ -1,5 +1,8 @@
-import requests, json, sys
+import requests, json, sys, datetime, smtplib
 from gradebookConfig import *
+from contextlib import redirect_stdout
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 def getStudentOutcomes(courseNumber, user): #takes in the Canvas course number and student ID number as a string and returns an Outcomes JSON for all assessed standards for that student
     #print("Requesting Outcomes for user #: " + str(user))
@@ -103,7 +106,7 @@ def gradeLookup(MP, A, C):
     else:
         return 'D'
         
-def summaryStudentReport(theList, studentID):
+def summaryStudentReport(theList, studentID, reportType):
     student = next((item for item in theList if item['id'] == studentID))
     student['scores'] = sorted(student['scores'], key=lambda k: k['due_date'])
     print(student['name'])
@@ -190,7 +193,77 @@ def summaryStudentReport(theList, studentID):
     print('Standard\tScore\tAssignment\t\t\tDate\n')
     for i in range(len(student['scores'])):
         print('{}\t{}\t{}\t\t{}'.format(student['scores'][i]['standard_name'].ljust(10),student['scores'][i]['score'],student['scores'][i]['assignment_name'].ljust(18),student['scores'][i]['due_date']))
-    print('page-break')
+
+    if reportType == 's' or reportType =='S':
+        print('page-break')
+    return
+
+def menu(myStudents, myInformation):
+    choice = ''
+    print('\n ___________ _____   _____               _      _                 _    \n/  ___| ___ \  __ \ |  __ \             | |    | |               | |   \n\ `--.| |_/ / |  \/ | |  \/_ __ __ _  __| | ___| |__   ___   ___ | | __\n `--. \ ___ \ | __  | | __| \'__/ _` |/ _` |/ _ \ \'_ \ / _ \ / _ \| |/ /\n/\__/ / |_/ / |_\ \ | |_\ \ | | (_| | (_| |  __/ |_) | (_) | (_) |   < \n\____/\____/ \____/  \____/_|  \__,_|\__,_|\___|_.__/ \___/ \___/|_|\_\\')
+    print('v 1.0.1\n\n')
+    print('Course #: ', myCourse)
+    print('[S] Save Progress Reports (gradeReport-YYYY-MM-DD-hh-mm-ss.txt)\n[E] E-mail Progress Reports\n[X] Exit')
+    choice = input('What would you like to do? ')
+
+    if choice == 's' or choice == 'S':
+        writeFileReport(myStudents, myInformation, choice)
+        menu(myStudents, myInformation)
+           
+    elif choice == 'x' or choice == 'X':
+        print('Quitting')
+
+    elif choice == 'e' or choice == 'E':
+        generateEmailReport(myStudents, myInformation, choice)
+        menu(myStudents, myInformation)
+
+    else:
+        menu(myStudents, myInformation)
+           
+    return
+
+
+def writeFileReport(myStudents, myInformation, choice):
+    with open('gradeReport-'+ str(datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")) + '.txt', 'a+') as f:
+       with redirect_stdout(f):
+         for i in myStudents:
+           summaryStudentReport(myInformation, int(i['id']), choice)       
+    return
+
+def sendEmailReport(address, report):
+    fromaddr = emailAddress
+    toaddr = address
+    msg = MIMEMultipart()
+    msg['From'] = fromaddr
+    msg['To'] = toaddr
+    msg['Subject'] = courseName + ' Grade Report (' + str(datetime.datetime.now().strftime("%Y-%m-%d")) + ')'
+
+    body = report
+    msg.attach(MIMEText(body, 'plain'))
+
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(fromaddr, emailPassword)
+    text = msg.as_string()
+    server.sendmail(fromaddr, toaddr, text)
+    server.quit()
+
+    return
+
+def generateEmailReport(myStudents, myInformation, choice):
+    for i in myStudents:
+
+        with open('emailReport.txt', 'w+') as f:
+           with redirect_stdout(f):
+             summaryStudentReport(myInformation, int(i['id']), choice)
+
+        with open('emailReport.txt', 'r') as report:
+            grades = report.read()
+
+        #print(str(i['login_id']))   #for testing
+        #print(grades)
+        sendEmailReport(str(i['login_id']), grades)     #for actually e-mailing reports              
+
     return
 
 def main():
@@ -198,12 +271,8 @@ def main():
     myAssignments = getAssignments(myCourse)    #create assignment JSON (big!)
     myInformation = createStudentList(myCourse, myStudents, myAssignments)
 
-    with open('gradeReport.txt', 'w') as f:
-        sys.stdout = f
+    menu(myStudents,myInformation)
 
-        for i in myStudents:
-            summaryStudentReport(myInformation, int(i['id']))
-         
     return
 
 main()
